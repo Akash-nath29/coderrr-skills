@@ -73,6 +73,8 @@ Examples:
     
     try:
         html = fetch_page(args.url, args.timeout)
+        # Reconfigure stdout to use UTF-8 to handle non-ASCII characters on Windows
+        sys.stdout.reconfigure(encoding='utf-8', errors='replace')
         print(html)
     except requests.exceptions.MissingSchema:
         print(f"Error: Invalid URL format. Make sure to include http:// or https://", file=sys.stderr)

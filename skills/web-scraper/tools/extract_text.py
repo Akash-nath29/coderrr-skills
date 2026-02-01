@@ -109,6 +109,8 @@ Examples:
     
     try:
         text = extract_text(html, args.selector)
+        # Reconfigure stdout to use UTF-8 to handle non-ASCII characters on Windows
+        sys.stdout.reconfigure(encoding='utf-8', errors='replace')
         if text:
             print(text)
         else:
