@@ -51,16 +51,18 @@ def extract_text(html: str, selector: str = None) -> str:
     for element in soup(['script', 'style', 'noscript', 'header', 'footer', 'nav']):
         element.decompose()
     
+    text = ""
     if selector:
         try:
             elements = soup.select(selector)
-            if not elements:
-                return ""
-            text_parts = [elem.get_text(separator=' ', strip=True) for elem in elements]
-            text = '\n\n'.join(text_parts)
+            if elements:
+                text_parts = [elem.get_text(separator=' ', strip=True) for elem in elements]
+                text = '\n\n'.join(text_parts)
         except Exception as e:
             raise ValueError(f"Invalid CSS selector '{selector}': {e}")
-    else:
+    
+    # Fallback: if selector returned nothing useful, extract all text
+    if len(text.strip()) < 100:
         text = soup.get_text(separator=' ', strip=True)
     
     # Clean up whitespace

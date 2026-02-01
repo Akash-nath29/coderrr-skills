@@ -123,8 +123,13 @@ def main():
     try:
         content = json.loads(content_str)
     except json.JSONDecodeError as e:
-        print(f"Error: Invalid content JSON - {e}", file=sys.stderr)
-        print(f"Debug: First 200 chars: {repr(content_str[:200])}", file=sys.stderr)
+        # Check for common placeholder patterns from LLMs
+        if '[...]' in content_str or '...' in content_str and 'elements' in content_str:
+            print("Error: Content contains placeholder text '[...]' instead of actual content.", file=sys.stderr)
+            print("The AI model did not generate real content. Please try again or provide actual content.", file=sys.stderr)
+        else:
+            print(f"Error: Invalid content JSON - {e}", file=sys.stderr)
+            print(f"Debug: First 200 chars: {repr(content_str[:200])}", file=sys.stderr)
         sys.exit(1)
     
     try:
