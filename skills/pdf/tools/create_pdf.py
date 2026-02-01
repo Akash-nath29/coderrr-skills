@@ -36,6 +36,10 @@ def create_pdf(output_path: str, content: dict, title: str = None):
         story.append(Paragraph(title, styles['Title']))
         story.append(Spacer(1, 0.5 * inch))
     
+    # Validate content structure
+    if 'elements' not in content:
+        raise ValueError("Content must have an 'elements' array. Example: {\"elements\": [{\"type\": \"paragraph\", \"text\": \"...\"}]}")
+    
     # Process elements
     for element in content.get('elements', []):
         elem_type = element.get('type', 'paragraph')
@@ -83,6 +87,15 @@ def create_pdf(output_path: str, content: dict, title: str = None):
         elif elem_type == 'spacer':
             height = element.get('height', 0.5)
             story.append(Spacer(1, height * inch))
+    
+    # Validate that we have content to build
+    if not story:
+        raise ValueError("No content provided - PDF would be empty. Please provide at least one element in the 'elements' array.")
+    
+    # Warn about minimal content
+    text_content = sum(len(elem.get('text', '')) for elem in content.get('elements', []))
+    if text_content < 50:
+        print(f"Warning: Very little content ({text_content} chars)", file=sys.stderr)
     
     doc.build(story)
     return output_path
