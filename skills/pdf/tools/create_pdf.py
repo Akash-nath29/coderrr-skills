@@ -109,10 +109,22 @@ def main():
     
     args = parser.parse_args()
     
+    # Debug: Show what we received
+    print(f"Debug: Received content length: {len(args.content)}", file=sys.stderr)
+    if len(args.content) < 100:
+        print(f"Debug: Content value: {repr(args.content)}", file=sys.stderr)
+    
+    # Handle empty content
+    content_str = args.content.strip()
+    if not content_str:
+        print("Error: Content argument is empty", file=sys.stderr)
+        sys.exit(1)
+    
     try:
-        content = json.loads(args.content)
+        content = json.loads(content_str)
     except json.JSONDecodeError as e:
         print(f"Error: Invalid content JSON - {e}", file=sys.stderr)
+        print(f"Debug: First 200 chars: {repr(content_str[:200])}", file=sys.stderr)
         sys.exit(1)
     
     try:
