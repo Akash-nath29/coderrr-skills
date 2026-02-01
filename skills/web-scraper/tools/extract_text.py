@@ -94,14 +94,26 @@ Examples:
         help='CSS selector to target specific elements (e.g., ".content", "article", "h1")'
     )
     
+    parser.add_argument(
+        '--file',
+        help='Path to file containing HTML to parse'
+    )
+    
     args = parser.parse_args()
     
-    # Get HTML from argument or stdin
-    if args.html:
+    # Get HTML from argument, file, or stdin
+    if args.file:
+        try:
+            with open(args.file, 'r', encoding='utf-8') as f:
+                html = f.read()
+        except Exception as e:
+            print(f"Error reading file {args.file}: {e}", file=sys.stderr)
+            sys.exit(2)
+    elif args.html:
         html = args.html
     else:
         if sys.stdin.isatty():
-            print("Error: No HTML provided. Use --html argument or pipe HTML to stdin.", file=sys.stderr)
+            print("Error: No HTML provided. Use --html, --file, or pipe HTML to stdin.", file=sys.stderr)
             sys.exit(2)
         html = sys.stdin.read()
     

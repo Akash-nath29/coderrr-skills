@@ -69,13 +69,25 @@ Examples:
         help='Request timeout in seconds (default: 30)'
     )
     
+    parser.add_argument(
+        '--output',
+        help='Optional path to save the HTML content to a file'
+    )
+    
     args = parser.parse_args()
     
     try:
         html = fetch_page(args.url, args.timeout)
-        # Reconfigure stdout to use UTF-8 to handle non-ASCII characters on Windows
-        sys.stdout.reconfigure(encoding='utf-8', errors='replace')
-        print(html)
+        
+        if args.output:
+            with open(args.output, 'w', encoding='utf-8') as f:
+                f.write(html)
+            print(f"Successfully saved content to {args.output}")
+        else:
+            # Reconfigure stdout to use UTF-8 to handle non-ASCII characters on Windows
+            sys.stdout.reconfigure(encoding='utf-8', errors='replace')
+            print(html)
+            
     except requests.exceptions.MissingSchema:
         print(f"Error: Invalid URL format. Make sure to include http:// or https://", file=sys.stderr)
         sys.exit(1)
