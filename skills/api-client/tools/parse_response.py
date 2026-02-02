@@ -219,13 +219,28 @@ Examples:
     
     try:
         result = parse_response(data_str, args.extract, args.format)
-        print(result)
-    except json.JSONDecodeError as e:
-        print(f"Error: Invalid JSON - {e}", file=sys.stderr)
-        sys.exit(4)
-    except (KeyError, TypeError, IndexError) as e:
-        print(f"Error extracting path: {e}", file=sys.stderr)
-        sys.exit(1)
+        
+        output = {
+            "status": "success",
+            "data": result,
+            "message": "Successfully parsed response"
+        }
+        
+        sys.stdout.reconfigure(encoding='utf-8', errors='replace')
+        print(json.dumps(output, indent=2))
+        
+    except Exception as e:
+        print_json_error(str(e))
+
+def print_json_error(message, exit_code=1):
+    result = {
+        "status": "error",
+        "error": message,
+        "message": message
+    }
+    sys.stdout.reconfigure(encoding='utf-8', errors='replace')
+    print(json.dumps(result, ensure_ascii=False))
+    sys.exit(exit_code)
 
 
 if __name__ == '__main__':

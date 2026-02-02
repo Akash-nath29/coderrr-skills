@@ -15,7 +15,11 @@ try:
     from openpyxl import load_workbook
     from openpyxl.utils import get_column_letter
 except ImportError:
-    print("Error: 'openpyxl' package is required. Install with: pip install openpyxl", file=sys.stderr)
+    print(json.dumps({
+        "status": "error",
+        "error": "'openpyxl' package is required. Install with: pip install openpyxl",
+        "message": "Missing dependency"
+    }))
     sys.exit(1)
 
 
@@ -88,11 +92,37 @@ def main():
         sys.exit(1)
     
     try:
-        result = read_xlsx(args.file, args.sheet, args.range, args.format)
-        print(result)
+        # Note: read_xlsx returns a string (text/json/csv)
+        result_content = read_xlsx(args.file, args.sheet, args.range, args.format)
+        
+        final_data = result_content
+        if args.format == 'json':
+            try:
+                final_data = json.loads(result_content)
+            except:
+                pass
+        
+        output = {
+            "status": "success",
+            "data": final_data,
+            "message": "Successfully read workbook"
+        }
+        
+        sys.stdout.reconfigure(encoding='utf-8', errors='replace')
+        print(json.dumps(output, indent=2, ensure_ascii=False))
+        
     except Exception as e:
-        print(f"Error: {e}", file=sys.stderr)
-        sys.exit(1)
+        print_json_error(str(e))
+
+def print_json_error(message, exit_code=1):
+    result = {
+        "status": "error",
+        "error": message,
+        "message": message
+    }
+    sys.stdout.reconfigure(encoding='utf-8', errors='replace')
+    print(json.dumps(result, ensure_ascii=False))
+    sys.exit(exit_code)
 
 
 if __name__ == '__main__':

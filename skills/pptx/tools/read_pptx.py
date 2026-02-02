@@ -14,7 +14,11 @@ from pathlib import Path
 try:
     from pptx import Presentation
 except ImportError:
-    print("Error: 'python-pptx' package is required. Install with: pip install python-pptx", file=sys.stderr)
+    print(json.dumps({
+        "status": "error",
+        "error": "'python-pptx' package is required. Install with: pip install python-pptx",
+        "message": "Missing dependency"
+    }))
     sys.exit(1)
 
 
@@ -101,11 +105,37 @@ def main():
         sys.exit(1)
     
     try:
-        result = read_pptx(args.file, args.format, args.include_notes)
-        print(result)
+        # Note: read_pptx returns a string (text/json/markdown)
+        result_content = read_pptx(args.file, args.format, args.include_notes)
+        
+        final_data = result_content
+        if args.format == 'json':
+            try:
+                final_data = json.loads(result_content)
+            except:
+                pass
+        
+        output = {
+            "status": "success",
+            "data": final_data,
+            "message": "Successfully read presentation"
+        }
+        
+        sys.stdout.reconfigure(encoding='utf-8', errors='replace')
+        print(json.dumps(output, indent=2, ensure_ascii=False))
+        
     except Exception as e:
-        print(f"Error: {e}", file=sys.stderr)
-        sys.exit(1)
+        print_json_error(str(e))
+
+def print_json_error(message, exit_code=1):
+    result = {
+        "status": "error",
+        "error": message,
+        "message": message
+    }
+    sys.stdout.reconfigure(encoding='utf-8', errors='replace')
+    print(json.dumps(result, ensure_ascii=False))
+    sys.exit(exit_code)
 
 
 if __name__ == '__main__':

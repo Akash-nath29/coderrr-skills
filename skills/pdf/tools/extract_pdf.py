@@ -15,7 +15,11 @@ from pathlib import Path
 try:
     import pdfplumber
 except ImportError:
-    print("Error: 'pdfplumber' package is required. Install with: pip install pdfplumber", file=sys.stderr)
+    print(json.dumps({
+        "status": "error",
+        "error": "'pdfplumber' package is required. Install with: pip install pdfplumber",
+        "message": "Missing dependency"
+    }))
     sys.exit(1)
 
 
@@ -98,11 +102,37 @@ def main():
         sys.exit(1)
     
     try:
-        result = extract_pdf(args.file, args.pages, args.tables, args.format)
-        print(result)
+        # Note: extract_pdf returns a string (text or JSON)
+        result_content = extract_pdf(args.file, args.pages, args.tables, args.format)
+        
+        final_data = result_content
+        if args.format == 'json':
+            try:
+                final_data = json.loads(result_content)
+            except:
+                pass
+        
+        output = {
+            "status": "success",
+            "data": final_data,
+            "message": "Successfully extracted content"
+        }
+        
+        sys.stdout.reconfigure(encoding='utf-8', errors='replace')
+        print(json.dumps(output, indent=2, ensure_ascii=False))
+        
     except Exception as e:
-        print(f"Error: {e}", file=sys.stderr)
-        sys.exit(1)
+        print_json_error(str(e))
+
+def print_json_error(message, exit_code=1):
+    result = {
+        "status": "error",
+        "error": message,
+        "message": message
+    }
+    sys.stdout.reconfigure(encoding='utf-8', errors='replace')
+    print(json.dumps(result, ensure_ascii=False))
+    sys.exit(exit_code)
 
 
 if __name__ == '__main__':

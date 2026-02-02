@@ -142,10 +142,28 @@ Examples:
     
     try:
         result = find_todos(args.path, marker_types)
-        print(json.dumps(result, indent=2))
-    except ValueError as e:
-        print(f"Error: {e}", file=sys.stderr)
-        sys.exit(1)
+        
+        output = {
+            "status": "success",
+            "data": result,
+            "message": f"Found {result['count']} task markers"
+        }
+        
+        sys.stdout.reconfigure(encoding='utf-8', errors='replace')
+        print(json.dumps(output, indent=2))
+        
+    except Exception as e:
+        print_json_error(str(e))
+
+def print_json_error(message, exit_code=1):
+    result = {
+        "status": "error",
+        "error": message,
+        "message": message
+    }
+    sys.stdout.reconfigure(encoding='utf-8', errors='replace')
+    print(json.dumps(result, ensure_ascii=False))
+    sys.exit(exit_code)
 
 
 if __name__ == '__main__':

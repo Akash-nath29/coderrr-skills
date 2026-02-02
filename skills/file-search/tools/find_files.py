@@ -98,13 +98,29 @@ Examples:
     
     try:
         matches = find_files(args.pattern, args.path, args.type)
-        print(json.dumps(matches, indent=2))
-    except ValueError as e:
-        print(f"Error: {e}", file=sys.stderr)
-        sys.exit(1)
-    except PermissionError as e:
-        print(f"Error: Permission denied - {e}", file=sys.stderr)
-        sys.exit(2)
+        
+        result = {
+            "status": "success",
+            "data": matches,
+            "message": f"Found {len(matches)} matches"
+        }
+        
+        # Reconfigure stdout to use UTF-8
+        sys.stdout.reconfigure(encoding='utf-8', errors='replace')
+        print(json.dumps(result, indent=2))
+        
+    except Exception as e:
+        print_json_error(str(e))
+
+def print_json_error(message, exit_code=1):
+    result = {
+        "status": "error",
+        "error": message,
+        "message": message
+    }
+    sys.stdout.reconfigure(encoding='utf-8', errors='replace')
+    print(json.dumps(result, ensure_ascii=False))
+    sys.exit(exit_code)
 
 
 if __name__ == '__main__':

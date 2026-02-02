@@ -14,7 +14,11 @@ from pathlib import Path
 try:
     from PyPDF2 import PdfReader, PdfWriter
 except ImportError:
-    print("Error: 'PyPDF2' package is required. Install with: pip install PyPDF2", file=sys.stderr)
+    print(json.dumps({
+        "status": "error",
+        "error": "'PyPDF2' package is required. Install with: pip install PyPDF2",
+        "message": "Missing dependency"
+    }))
     sys.exit(1)
 
 
@@ -75,14 +79,31 @@ def main():
     
     try:
         result = split_pdf(args.file, args.output_dir, args.pages)
-        print(json.dumps({
+        
+        output = {
             "status": "success",
-            "files": result,
-            "count": len(result)
-        }, indent=2))
+            "data": {
+                "files": result,
+                "count": len(result)
+            },
+            "message": f"Successfully split into {len(result)} files"
+        }
+        
+        sys.stdout.reconfigure(encoding='utf-8', errors='replace')
+        print(json.dumps(output, indent=2))
+        
     except Exception as e:
-        print(f"Error: {e}", file=sys.stderr)
-        sys.exit(1)
+        print_json_error(str(e))
+
+def print_json_error(message, exit_code=1):
+    result = {
+        "status": "error",
+        "error": message,
+        "message": message
+    }
+    sys.stdout.reconfigure(encoding='utf-8', errors='replace')
+    print(json.dumps(result, ensure_ascii=False))
+    sys.exit(exit_code)
 
 
 if __name__ == '__main__':

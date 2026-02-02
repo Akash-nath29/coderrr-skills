@@ -15,7 +15,11 @@ try:
     from openpyxl import load_workbook
     from openpyxl.styles import Font, PatternFill
 except ImportError:
-    print("Error: 'openpyxl' package is required. Install with: pip install openpyxl", file=sys.stderr)
+    print(json.dumps({
+        "status": "error",
+        "error": "'openpyxl' package is required. Install with: pip install openpyxl",
+        "message": "Missing dependency"
+    }))
     sys.exit(1)
 
 
@@ -97,10 +101,30 @@ def main():
     
     try:
         result = edit_xlsx(args.file, args.output, operations)
-        print(json.dumps({"status": "success", "file": result}))
+        
+        output = {
+            "status": "success",
+            "data": {
+                "file": result
+            },
+            "message": "Successfully edited workbook"
+        }
+        
+        sys.stdout.reconfigure(encoding='utf-8', errors='replace')
+        print(json.dumps(output, indent=2))
+        
     except Exception as e:
-        print(f"Error: {e}", file=sys.stderr)
-        sys.exit(1)
+        print_json_error(str(e))
+
+def print_json_error(message, exit_code=1):
+    result = {
+        "status": "error",
+        "error": message,
+        "message": message
+    }
+    sys.stdout.reconfigure(encoding='utf-8', errors='replace')
+    print(json.dumps(result, ensure_ascii=False))
+    sys.exit(exit_code)
 
 
 if __name__ == '__main__':

@@ -93,36 +93,33 @@ Examples:
     try:
         response = http_get(args.url, headers, args.timeout)
         
-        # Try to pretty-print if JSON
         try:
-            data = json.loads(response)
-            print(json.dumps(data, indent=2, ensure_ascii=False))
+            # Try to parse response as JSON for the data field
+            resp_data = json.loads(response)
         except json.JSONDecodeError:
-            # Not JSON, print as-is
-            print(response)
+            resp_data = response
+
+        output = {
+            "status": "success",
+            "data": resp_data,
+            "message": "GET request successful"
+        }
+        
+        sys.stdout.reconfigure(encoding='utf-8', errors='replace')
+        print(json.dumps(output, indent=2))
             
-    except requests.exceptions.MissingSchema:
-        print(f"Error: Invalid URL. Include http:// or https://", file=sys.stderr)
-        sys.exit(1)
-    except requests.exceptions.ConnectionError as e:
-        print(f"Error: Connection failed - {e}", file=sys.stderr)
-        sys.exit(2)
-    except requests.exceptions.Timeout:
-        print(f"Error: Request timed out after {args.timeout} seconds", file=sys.stderr)
-        sys.exit(2)
-    except requests.exceptions.HTTPError as e:
-        print(f"Error: HTTP {e.response.status_code} - {e.response.reason}", file=sys.stderr)
-        # Still output the response body if available
-        if e.response.text:
-            try:
-                data = json.loads(e.response.text)
-                print(json.dumps(data, indent=2), file=sys.stderr)
-            except json.JSONDecodeError:
-                print(e.response.text, file=sys.stderr)
-        sys.exit(3)
-    except requests.exceptions.RequestException as e:
-        print(f"Error: {e}", file=sys.stderr)
-        sys.exit(2)
+    except Exception as e:
+        print_json_error(str(e))
+
+def print_json_error(message, exit_code=1):
+    result = {
+        "status": "error",
+        "error": message,
+        "message": message
+    }
+    sys.stdout.reconfigure(encoding='utf-8', errors='replace')
+    print(json.dumps(result, ensure_ascii=False))
+    sys.exit(exit_code)
 
 
 if __name__ == '__main__':

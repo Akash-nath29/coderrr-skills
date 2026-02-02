@@ -79,18 +79,30 @@ Examples:
     
     try:
         result = validate_json(args.file)
-        print(json.dumps(result, indent=2))
         
-        # Exit with code 2 if invalid (but still output the result)
-        if not result['valid']:
-            sys.exit(2)
+        output = {
+            "status": "success",
+            "data": result,
+            "message": "JSON is valid" if result['valid'] else "JSON is invalid"
+        }
+        
+        sys.stdout.reconfigure(encoding='utf-8', errors='replace')
+        print(json.dumps(output, indent=2))
+        
+        # Exit with code 0 as the tool successfully ran (validity is in data)
             
-    except FileNotFoundError as e:
-        print(f"Error: {e}", file=sys.stderr)
-        sys.exit(1)
-    except IOError as e:
-        print(f"Error: {e}", file=sys.stderr)
-        sys.exit(1)
+    except Exception as e:
+        print_json_error(str(e))
+
+def print_json_error(message, exit_code=1):
+    result = {
+        "status": "error",
+        "error": message,
+        "message": message
+    }
+    sys.stdout.reconfigure(encoding='utf-8', errors='replace')
+    print(json.dumps(result, ensure_ascii=False))
+    sys.exit(exit_code)
 
 
 if __name__ == '__main__':

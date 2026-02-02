@@ -15,7 +15,11 @@ try:
     from pptx import Presentation
     from pptx.util import Inches, Pt
 except ImportError:
-    print("Error: 'python-pptx' package is required. Install with: pip install python-pptx", file=sys.stderr)
+    print(json.dumps({
+        "status": "error",
+        "error": "'python-pptx' package is required. Install with: pip install python-pptx",
+        "message": "Missing dependency"
+    }))
     sys.exit(1)
 
 
@@ -121,10 +125,31 @@ def main():
     
     try:
         result = create_pptx(args.output, args.title, slides)
-        print(json.dumps({"status": "success", "file": result, "slides": len(slides) + 1}))
+        
+        output = {
+            "status": "success",
+            "data": {
+                "file": result,
+                "slides": len(slides) + 1
+            },
+            "message": "Successfully created presentation"
+        }
+        
+        sys.stdout.reconfigure(encoding='utf-8', errors='replace')
+        print(json.dumps(output, indent=2))
+        
     except Exception as e:
-        print(f"Error: {e}", file=sys.stderr)
-        sys.exit(1)
+        print_json_error(str(e))
+
+def print_json_error(message, exit_code=1):
+    result = {
+        "status": "error",
+        "error": message,
+        "message": message
+    }
+    sys.stdout.reconfigure(encoding='utf-8', errors='replace')
+    print(json.dumps(result, ensure_ascii=False))
+    sys.exit(exit_code)
 
 
 if __name__ == '__main__':

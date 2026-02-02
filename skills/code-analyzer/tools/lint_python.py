@@ -173,13 +173,28 @@ Examples:
     
     try:
         result = lint_python(args.file)
-        print(json.dumps(result, indent=2))
-    except ValueError as e:
-        print(f"Error: {e}", file=sys.stderr)
-        sys.exit(1)
+        
+        output = {
+            "status": "success",
+            "data": result,
+            "message": f"Linting complete: {len(result['errors'])} errors, {len(result['warnings'])} warnings"
+        }
+        
+        sys.stdout.reconfigure(encoding='utf-8', errors='replace')
+        print(json.dumps(output, indent=2))
+        
     except Exception as e:
-        print(f"Error parsing file: {e}", file=sys.stderr)
-        sys.exit(2)
+        print_json_error(str(e))
+
+def print_json_error(message, exit_code=1):
+    result = {
+        "status": "error",
+        "error": message,
+        "message": message
+    }
+    sys.stdout.reconfigure(encoding='utf-8', errors='replace')
+    print(json.dumps(result, ensure_ascii=False))
+    sys.exit(exit_code)
 
 
 if __name__ == '__main__':

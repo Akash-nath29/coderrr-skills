@@ -14,7 +14,11 @@ from pathlib import Path
 try:
     from docx import Document
 except ImportError:
-    print("Error: 'python-docx' package is required. Install with: pip install python-docx", file=sys.stderr)
+    print(json.dumps({
+        "status": "error",
+        "error": "'python-docx' package is required. Install with: pip install python-docx",
+        "message": "Missing dependency"
+    }))
     sys.exit(1)
 
 
@@ -98,10 +102,30 @@ def main():
     
     try:
         result = edit_docx(args.file, args.output, operations)
-        print(json.dumps({"status": "success", "file": result}))
+        
+        output = {
+            "status": "success",
+            "data": {
+                "file": result
+            },
+            "message": "Successfully edited document"
+        }
+        
+        sys.stdout.reconfigure(encoding='utf-8', errors='replace')
+        print(json.dumps(output, indent=2))
+        
     except Exception as e:
-        print(f"Error: {e}", file=sys.stderr)
-        sys.exit(1)
+        print_json_error(str(e))
+
+def print_json_error(message, exit_code=1):
+    result = {
+        "status": "error",
+        "error": message,
+        "message": message
+    }
+    sys.stdout.reconfigure(encoding='utf-8', errors='replace')
+    print(json.dumps(result, ensure_ascii=False))
+    sys.exit(exit_code)
 
 
 if __name__ == '__main__':

@@ -96,10 +96,35 @@ Examples:
     # Format and output
     try:
         formatted = format_json(data, args.indent, args.minify)
-        print(formatted)
-    except json.JSONDecodeError as e:
-        print(f"Error: Invalid JSON - {e.msg} at line {e.lineno}, column {e.colno}", file=sys.stderr)
-        sys.exit(2)
+        
+        output = {
+            "status": "success",
+            "data": formatted,
+            "message": "Successfully formatted JSON"
+        }
+        # Note: data here is a string (formatted JSON), which is fine.
+        # But if the user wants *structure*, putting a string inside 'data' means it's double-encoded if printed as JSON.
+        # Ideally 'data' should be the actual object if we want the agent to use it structurally.
+        # However, format_json is often used to *display* text. 
+        # But the plan says "standard JSON output".
+        # If I return {data: <string>}, `skillRunner` will parse it. `result.output` will be that string. 
+        # The agent can then use it.
+        
+        sys.stdout.reconfigure(encoding='utf-8', errors='replace')
+        print(json.dumps(output, ensure_ascii=False))
+        
+    except Exception as e:
+        print_json_error(str(e))
+
+def print_json_error(message, exit_code=1):
+    result = {
+        "status": "error",
+        "error": message,
+        "message": message
+    }
+    sys.stdout.reconfigure(encoding='utf-8', errors='replace')
+    print(json.dumps(result, ensure_ascii=False))
+    sys.exit(exit_code)
 
 
 if __name__ == '__main__':

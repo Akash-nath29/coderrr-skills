@@ -21,10 +21,16 @@ import argparse
 import sys
 import re
 
+import json
+
 try:
     from bs4 import BeautifulSoup
 except ImportError:
-    print("Error: 'beautifulsoup4' package is required. Install with: pip install beautifulsoup4", file=sys.stderr)
+    print(json.dumps({
+        "status": "error",
+        "error": "'beautifulsoup4' package is required. Install with: pip install beautifulsoup4",
+        "message": "Missing dependency"
+    }))
     sys.exit(1)
 
 
@@ -123,20 +129,35 @@ Examples:
     
     try:
         text = extract_text(html, args.selector)
-        # Reconfigure stdout to use UTF-8 to handle non-ASCII characters on Windows
+        
+        result = {
+            "status": "success",
+            "data": text,
+            "message": "Successfully extracted text"
+        }
+        
+        if not text and args.selector:
+            result["message"] = f"No content found matching selector: {args.selector}"
+            # Still success, just empty data
+            
+        # Reconfigure stdout to use UTF-8
         sys.stdout.reconfigure(encoding='utf-8', errors='replace')
-        if text:
-            print(text)
-        else:
-            if args.selector:
-                print(f"No content found matching selector: {args.selector}", file=sys.stderr)
+        print(json.dumps(result, ensure_ascii=False))
+            
     except ValueError as e:
-        if "selector" in str(e).lower():
-            print(f"Error: {e}", file=sys.stderr)
-            sys.exit(3)
-        else:
-            print(f"Error: {e}", file=sys.stderr)
-            sys.exit(2)
+        print_json_error(str(e), 3 if "selector" in str(e).lower() else 2)
+    except Exception as e:
+        print_json_error(f"Unexpected error: {e}", 2)
+
+def print_json_error(message, exit_code):
+    result = {
+        "status": "error",
+        "error": message,
+        "message": message
+    }
+    sys.stdout.reconfigure(encoding='utf-8', errors='replace')
+    print(json.dumps(result, ensure_ascii=False))
+    sys.exit(exit_code)
 
 
 if __name__ == '__main__':

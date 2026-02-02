@@ -2,8 +2,10 @@
 """
 Fetch HTML content from a URL.
 
-This tool makes an HTTP GET request to the specified URL and outputs
-the HTML content to stdout.
+This tool makes an HTTP GET request to the specified URL.
+WARNING: ONLY use this tool if the user has provided a specific, real URL.
+DO NOT hallucinate or make up URLs (like example.com or placeholders).
+If the user asks to "build a website" without a URL, do NOT use this tool.
 
 Usage:
     python fetch_page.py --url https://example.com
@@ -16,10 +18,16 @@ Exit Codes:
 import argparse
 import sys
 
+import json
+
 try:
     import requests
 except ImportError:
-    print("Error: 'requests' package is required. Install with: pip install requests", file=sys.stderr)
+    print(json.dumps({
+        "status": "error", 
+        "error": "'requests' package is required. Install with: pip install requests",
+        "message": "Missing dependency"
+    }))
     sys.exit(1)
 
 
@@ -79,30 +87,45 @@ Examples:
     try:
         html = fetch_page(args.url, args.timeout)
         
+        result = {
+            "status": "success",
+            "data": html,
+            "message": "Successfully fetched page"
+        }
+
         if args.output:
             with open(args.output, 'w', encoding='utf-8') as f:
                 f.write(html)
-            print(f"Successfully saved content to {args.output}")
-        else:
-            # Reconfigure stdout to use UTF-8 to handle non-ASCII characters on Windows
-            sys.stdout.reconfigure(encoding='utf-8', errors='replace')
-            print(html)
+            result["data"] = args.output
+            result["message"] = f"Successfully saved content to {args.output}"
+            
+        # Reconfigure stdout to use UTF-8 to handle non-ASCII characters on Windows
+        sys.stdout.reconfigure(encoding='utf-8', errors='replace')
+        print(json.dumps(result, ensure_ascii=False))
             
     except requests.exceptions.MissingSchema:
-        print(f"Error: Invalid URL format. Make sure to include http:// or https://", file=sys.stderr)
-        sys.exit(1)
+        print_json_error("Invalid URL format. Make sure to include http:// or https://", 1)
     except requests.exceptions.ConnectionError:
-        print(f"Error: Failed to connect to {args.url}", file=sys.stderr)
-        sys.exit(1)
+        print_json_error(f"Failed to connect to {args.url}", 1)
     except requests.exceptions.Timeout:
-        print(f"Error: Request timed out after {args.timeout} seconds", file=sys.stderr)
-        sys.exit(1)
+        print_json_error(f"Request timed out after {args.timeout} seconds", 1)
     except requests.exceptions.HTTPError as e:
-        print(f"Error: HTTP {e.response.status_code} - {e.response.reason}", file=sys.stderr)
-        sys.exit(1)
+        print_json_error(f"HTTP {e.response.status_code} - {e.response.reason}", 1)
     except requests.exceptions.RequestException as e:
-        print(f"Error: {e}", file=sys.stderr)
-        sys.exit(1)
+        print_json_error(f"{e}", 1)
+    except Exception as e:
+        print_json_error(f"Unexpected error: {e}", 1)
+
+def print_json_error(message, exit_code):
+    result = {
+        "status": "error",
+        "error": message,
+        "message": message
+    }
+    # Use utf-8 encoding for stdout
+    sys.stdout.reconfigure(encoding='utf-8', errors='replace')
+    print(json.dumps(result, ensure_ascii=False))
+    sys.exit(exit_code)
 
 
 if __name__ == '__main__':

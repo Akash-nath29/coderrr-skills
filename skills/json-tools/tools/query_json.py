@@ -178,16 +178,28 @@ Examples:
     
     try:
         result = query_json(args.file, args.path)
-        print(json.dumps(result, indent=2, ensure_ascii=False))
-    except FileNotFoundError as e:
-        print(f"Error: {e}", file=sys.stderr)
-        sys.exit(1)
-    except json.JSONDecodeError as e:
-        print(f"Error: Invalid JSON - {e.msg} at line {e.lineno}", file=sys.stderr)
-        sys.exit(2)
-    except (KeyError, IndexError, TypeError) as e:
-        print(f"Error: {e}", file=sys.stderr)
-        sys.exit(3)
+        
+        output = {
+            "status": "success",
+            "data": result,
+            "message": "Successfully queried JSON"
+        }
+        
+        sys.stdout.reconfigure(encoding='utf-8', errors='replace')
+        print(json.dumps(output, indent=2, ensure_ascii=False))
+        
+    except Exception as e:
+        print_json_error(str(e))
+
+def print_json_error(message, exit_code=1):
+    result = {
+        "status": "error",
+        "error": message,
+        "message": message
+    }
+    sys.stdout.reconfigure(encoding='utf-8', errors='replace')
+    print(json.dumps(result, ensure_ascii=False))
+    sys.exit(exit_code)
 
 
 if __name__ == '__main__':

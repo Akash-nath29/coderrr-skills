@@ -15,6 +15,11 @@ Before invoking tools, understand what the user needs:
 - **Specific Elements**: Use `--selector` to target navigation, articles, headers, or any CSS-selectable content
 - **Batch Processing**: For multiple URLs, invoke `fetch_page` sequentially and aggregate results
 
+**IMPORTANT GUIDELINES**:
+- **DO NOT** use these tools if the user has not provided a specific URL.
+- **DO NOT** make up or hallucinate URLs (e.g., example-pizza.com).
+- If the user asks to "build a website", rely on your training data, NOT these tools, unless valid URLs are provided.
+
 ## Tools
 
 ### fetch_page
@@ -28,12 +33,13 @@ python tools/fetch_page.py --url <url> [--timeout <seconds>]
 **Arguments:**
 - `--url` (required): The complete URL including http:// or https://
 - `--timeout` (optional): Request timeout in seconds (default: 30)
+- `--output` (optional): Path to save the HTML content to a file (Recommended for large pages)
 
-**Output:** Raw HTML to stdout. Errors to stderr with appropriate exit codes.
+**Output:** Raw HTML to stdout, or saved to file if `--output` is specified. Errors to stderr with appropriate exit codes.
 
 **When to use:**
 - User wants to see the page source
-- First step before text extraction
+- First step before text extraction (use `--output` to avoid passing large strings)
 - Checking if a URL is accessible
 - Downloading page content for later analysis
 
@@ -44,11 +50,12 @@ python tools/fetch_page.py --url <url> [--timeout <seconds>]
 Parses HTML and extracts clean, readable text. Automatically removes scripts, styles, navigation, headers, and footers for cleaner output.
 
 ```bash
-python tools/extract_text.py [--html <html_string>] [--selector <css_selector>]
+python tools/extract_text.py [--html <html_string>] [--file <path>] [--selector <css_selector>]
 ```
 
 **Arguments:**
-- `--html` (optional): HTML string to parse. If omitted, reads from stdin (for piping)
+- `--html` (optional): HTML string to parse.
+- `--file` (optional): Path to file containing HTML to parse (Recommended).
 - `--selector` (optional): CSS selector to target specific elements (e.g., `.article`, `#main`, `h1, h2, h3`)
 
 **Output:** Clean text with normalized whitespace.
@@ -57,7 +64,7 @@ python tools/extract_text.py [--html <html_string>] [--selector <css_selector>]
 - User wants readable text, not HTML
 - Extracting article content from news sites
 - Getting text from specific page sections
-- Processing HTML that was previously fetched or provided
+- Processing HTML that was previously fetched (use `--file`)
 
 ## Common Patterns
 

@@ -18,7 +18,11 @@ try:
     from reportlab.platypus import SimpleDocTemplate, Paragraph, Spacer, Table, TableStyle, PageBreak
     from reportlab.lib import colors
 except ImportError:
-    print("Error: 'reportlab' package is required. Install with: pip install reportlab", file=sys.stderr)
+    print(json.dumps({
+        "status": "error",
+        "error": "'reportlab' package is required. Install with: pip install reportlab", 
+        "message": "Missing dependency"
+    }))
     sys.exit(1)
 
 
@@ -134,10 +138,30 @@ def main():
     
     try:
         result = create_pdf(args.output, content, args.title)
-        print(json.dumps({"status": "success", "file": result}))
+        
+        output = {
+            "status": "success",
+            "data": {
+                "file": result
+            },
+            "message": "Successfully created PDF"
+        }
+        
+        sys.stdout.reconfigure(encoding='utf-8', errors='replace')
+        print(json.dumps(output, indent=2))
+        
     except Exception as e:
-        print(f"Error: {e}", file=sys.stderr)
-        sys.exit(1)
+        print_json_error(str(e))
+
+def print_json_error(message, exit_code=1):
+    result = {
+        "status": "error",
+        "error": message,
+        "message": message
+    }
+    sys.stdout.reconfigure(encoding='utf-8', errors='replace')
+    print(json.dumps(result, ensure_ascii=False))
+    sys.exit(exit_code)
 
 
 if __name__ == '__main__':
